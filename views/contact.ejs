@@ -5,6 +5,11 @@
     <a href="/contact/add">
         <button type="button" class="btn btn-primary">Tambah Kontak Baru</button>
     </a>
+    <% if (msg.length !== 0) { %>
+        <div class="alert alert-success" role="alert" style="margin-top: 3rem;">
+            <%= msg %> 
+          </div>
+    <% } %>
     <div class="row">
         <div class="col-md-8">
             <table class="table">
