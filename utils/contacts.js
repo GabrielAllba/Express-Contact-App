@@ -30,7 +30,11 @@ const saveContacts = (contacts) => {
     fs.writeFileSync('data/contacts.json', JSON.stringify(contacts, null, 2))
 }
 
-
+//cek nama yang duplikat
+const cekDuplikat = (nama) => {
+    const contacts = loadContact()
+    return contacts.find((contact) => contact.nama === nama)
+}
 
 // menambahkan data kontak baru
 const addContact = (contact) => {
@@ -39,4 +43,14 @@ const addContact = (contact) => {
     saveContacts(contacts)
 }
 
-module.exports = {loadContact, findContact, addContact}
+//delete contact
+const deleteContact= (nama) => {
+    const contacts = loadContact()
+    const newContacts = contacts.filter((contact) => 
+        contact.nama.toLowerCase() != nama.toLowerCase()
+    )
+    fs.writeFileSync('data/contacts.json', JSON.stringify(newContacts, null,2))
+}
+
+module.exports = {loadContact, findContact, 
+    addContact, cekDuplikat, deleteContact}
