@@ -4,6 +4,20 @@ const port = 3000;
 
 const contactsMethod = require('./utils/contacts')
 
+const session = require('express-session')
+const cookieParser = require('cookie-parser')
+const flash = require('connect-flash')
+
+//konfigurasi flash
+app.use(cookieParser('secret'))
+app.use(session({
+  cookie: {maxAge: 6000},
+  secret: 'secret',
+  resave: true,
+  saveUninitialized: true
+}))
+app.use(flash())
+
 //validation form 
 const {body, validationResult, check} = require('express-validator')
 
@@ -54,7 +68,8 @@ app.get('/contact', (req,res) => {
   const contacts = contactsMethod.loadContact()
   res.render('contact', {
     title: 'Halaman Contact',
-    contacts: contacts
+    contacts: contacts,
+    msg: req.flash('msg')
   })
 })
 
@@ -90,10 +105,71 @@ app.post('/contact',[
   }
   else{
     contactsMethod.addContact(req.body)
+
+    //kirimkan flash message
+    req.flash('msg', 'Data contact berhasil ditambahkan')
+    res.redirect('/contact')
+  }
+})
+ 
+//proses ubah data kontak
+app.post('/contact/update',[
+
+  //parameter 1 berdasarkan name
+  check('email', 'email tidak valid').isEmail(),
+  check('nohp', 'nomer hp tidak valid').isMobilePhone('id-ID'),
+  body('nama').custom((value, { req }) => {
+    const duplikat = contactsMethod.cekDuplikat(value)
+    if(value != req.body.oldNama && duplikat){
+      //throw new err return false automatically
+      throw new Error('nama sudah ada, silahkan gunakan nama lain')
+    }
+    return true
+  })
+], (req,res) => {
+  const errors = validationResult(req)
+  if(!errors.isEmpty()){
+    res.render('edit-contact', {
+      title: 'Update Data Kontak',
+      errors: errors.array(),
+      contact: req.body
+    })
+  }
+  else{
+    // res.send(req.body)
+    // contactsMethod.addContact(req.body)
+
+    //kirimkan flash message
+    contactsMethod.updateContacts(req.body)
+    req.flash('msg', 'Data contact berhasil diubah')
     res.redirect('/contact')
   }
 })
 
+
+//form ubah data kontak
+app.get('/contact/edit/:nama', (req,res) => {
+  const findContact = contactsMethod.findContact(req.params.nama)
+  res.render('edit-contact', {
+    title: 'Form Ubah Data Kontak',
+    contact: findContact
+  })
+})
+
+
+//proses delete contact
+app.get('/contact/delete/:nama', (req,res) => {
+  const contact = contactsMethod.findContact(req.params.nama)
+  if(!contact){
+    res.status(404)
+    res.send("<h1>404</h1>")
+  }
+  else{
+    contactsMethod.deleteContact(req.params.nama)
+    req.flash('msg', `data ${req.params.nama} berhasil dihapus!`)
+    res.redirect('/contact')
+  }
+})
 //halaman detail contact
 app.get('/contact/:nama', (req,res) => {
   const contact = contactsMethod.findContact(req.params.nama)
@@ -114,11 +190,6 @@ app.use('/', (req,res) => {
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })
-
-
-
-
-
 
 
 
