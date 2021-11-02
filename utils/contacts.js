@@ -49,8 +49,18 @@ const deleteContact= (nama) => {
     const newContacts = contacts.filter((contact) => 
         contact.nama.toLowerCase() != nama.toLowerCase()
     )
-    fs.writeFileSync('data/contacts.json', JSON.stringify(newContacts, null,2))
+    saveContacts(newContacts)
+}
+
+//fungsi update contact
+const updateContacts = (contactBaru) => {
+    const contacts = loadContact()
+    const filteredContacts = contacts.filter((contact) => contact.nama !== contactBaru.oldNama)
+    console.log(contacts,filteredContacts, contactBaru)
+    delete contactBaru.oldNama
+    filteredContacts.push(contactBaru)
+    saveContacts(filteredContacts)
 }
 
 module.exports = {loadContact, findContact, 
-    addContact, cekDuplikat, deleteContact}
+    addContact, cekDuplikat, deleteContact, updateContacts}
